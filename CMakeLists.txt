@@ -12,6 +12,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 #### youbot driver dependencies
 ## check required prerequisites
@@ -52,7 +53,7 @@ target_link_libraries(youbot_driver_wrapper_node
 	pthread
 )
 set_target_properties(youbot_driver_wrapper_node PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
-ament_target_dependencies(youbot_driver_wrapper_node rclcpp sensor_msgs nav_msgs geometry_msgs)
+ament_target_dependencies(youbot_driver_wrapper_node rclcpp sensor_msgs nav_msgs geometry_msgs tf2_ros)
 
 # install the executables
 install(TARGETS
