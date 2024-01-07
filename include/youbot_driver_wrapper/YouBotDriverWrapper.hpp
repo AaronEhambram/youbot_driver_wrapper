@@ -16,9 +16,13 @@ class YouBotDriverWrapper : public rclcpp::Node
     YouBotDriverWrapper();
   private:
     void twist_callback(const geometry_msgs::msg::Twist::SharedPtr twist_msg);
+    void arm_joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr arm_state_msg); 
 
     // velocity subscriber
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr twist_subscription_;
+
+    // arm joints subsciber
+    rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr arm_joint_state_subscription_;
 
     // odometry publisher
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_publisher_;

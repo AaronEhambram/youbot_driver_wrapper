@@ -8,7 +8,8 @@ using namespace youbot;
 YouBotDriverWrapper::YouBotDriverWrapper() : Node("youbot_driver_wrapper_node")
 {
   // setup the subscriber
-  twist_subscription_ = this->create_subscription<geometry_msgs::msg::Twist>("cmd_vel", 10, std::bind(&YouBotDriverWrapper::twist_callback, this, _1));
+  twist_subscription_ = this->create_subscription<geometry_msgs::msg::Twist>("cmd_vel", 1, std::bind(&YouBotDriverWrapper::twist_callback, this, _1));
+  arm_joint_state_subscription_ = this->create_subscription<sensor_msgs::msg::JointState>("arm_joint_state", 1, std::bind(&YouBotDriverWrapper::arm_joint_state_callback, this, _1));
 
   // setup the publisher
   odom_publisher_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", 10);
@@ -80,6 +81,15 @@ void YouBotDriverWrapper::publish_joint_state()
     {
       joint_state_msg_.position[i+4] = arm_data[i].angle.value();
     }
+
+    /*// gripper data this code leads to crash, as the gripper value cannot be accessed
+    GripperSensedBarPosition bar_left;
+    myYouBotManipulator->getArmGripper().getGripperBar1().getData(bar_left);
+    joint_state_msg_.position[9] = bar_left.barPosition.value();
+    GripperSensedBarPosition bar_right;
+    myYouBotManipulator->getArmGripper().getGripperBar2().getData(bar_right);
+    joint_state_msg_.position[10] = bar_right.barPosition.value();*/
+
     joint_state_publisher_->publish(joint_state_msg_);
     loop_rate.sleep();
   }
@@ -91,6 +101,32 @@ void YouBotDriverWrapper::twist_callback(const geometry_msgs::msg::Twist::Shared
   quantity<si::velocity> transversalVelocity = (twist_msg->linear.y) * meter_per_second;
   quantity<si::angular_velocity> angularVelocity = (twist_msg->angular.z) * radian_per_second;
   myYouBotBase->setBaseVelocity(longitudinalVelocity, transversalVelocity, angularVelocity);
+}
+
+void YouBotDriverWrapper::arm_joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr arm_state_msg)
+{
+  JointAngleSetpoint desiredJointAngle;
+  desiredJointAngle.angle = arm_state_msg->position[0] * radian;
+  myYouBotManipulator->getArmJoint(1).setData(desiredJointAngle);
+
+  desiredJointAngle.angle = arm_state_msg->position[1] * radian;
+  myYouBotManipulator->getArmJoint(2).setData(desiredJointAngle);
+
+  desiredJointAngle.angle = arm_state_msg->position[2] * radian;
+  myYouBotManipulator->getArmJoint(3).setData(desiredJointAngle);
+
+  desiredJointAngle.angle = arm_state_msg->position[3] * radian;
+  myYouBotManipulator->getArmJoint(4).setData(desiredJointAngle);
+
+  desiredJointAngle.angle = arm_state_msg->position[4] * radian;
+  myYouBotManipulator->getArmJoint(5).setData(desiredJointAngle);
+
+  GripperBarPositionSetPoint desired_gripper_bar; 
+  desired_gripper_bar.barPosition = arm_state_msg->position[5] * meter;
+  myYouBotManipulator->getArmGripper().getGripperBar1().setData(desired_gripper_bar);
+
+  desired_gripper_bar.barPosition = arm_state_msg->position[6] * meter;
+  myYouBotManipulator->getArmGripper().getGripperBar2().setData(desired_gripper_bar);
 }
 
 void YouBotDriverWrapper::odom_publisher_callback()
